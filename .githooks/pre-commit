@@ -1,0 +1,3 @@
+#!/bin/sh
+# Blocks the commit unless typecheck, lint and tests pass. Enabled by `bun install` (see "prepare" in package.json).
+exec bun run ci

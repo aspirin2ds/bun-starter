@@ -4,14 +4,20 @@ A minimal, strict [Bun](https://bun.sh) HTTP server to copy when starting a new 
 
 ## Start a new app from it
 
+One-time setup: register this folder as a local `bun create` template. The symlink means edits here reach every new app.
+
 ```sh
-cp -r bun-starter my-app && cd my-app
-rm -rf .git && git init
-# rename "name" in package.json
-bun install
-cp .env.example .env
-bun run dev
+mkdir -p ~/.bun-create && ln -s "$PWD" ~/.bun-create/bun-starter
 ```
+
+Then, for each new app:
+
+```sh
+bun create bun-starter my-app
+cd my-app && bun run dev
+```
+
+`bun create` copies everything except `node_modules` and sets `name` in `package.json`. It also starts a fresh git repo with an initial commit, creates `.env` from `.env.example`, and runs `bun install`, which turns on the pre-commit hook. It copies untracked files too, so keep secrets and scratch files out of this folder.
 
 ## Scripts
 

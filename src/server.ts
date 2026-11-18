@@ -1,7 +1,10 @@
+import { z } from "zod";
 import type { Config } from "./config";
 import { errorResponse, json, readJson } from "./http";
 
 const MAX_BODY_BYTES = 1024 * 1024;
+
+const EchoBody = z.object({ message: z.string().trim().min(1).max(1000) });
 
 /** Starts the HTTP server. Does no other work at import time, so tests can start their own on port 0. */
 export function createServer(config: Config) {
@@ -17,7 +20,10 @@ export function createServer(config: Config) {
       "/health": { GET: () => json({ status: "ok" }) },
 
       "/api/echo": {
-        POST: async (req) => json({ echo: await readJson(req) }),
+        POST: async (req) => {
+          const { message } = await readJson(req, EchoBody);
+          return json({ echo: message });
+        },
       },
     },
 

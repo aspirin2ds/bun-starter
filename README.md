@@ -1,23 +1,40 @@
 # bun-starter
 
-A minimal, strict [Bun](https://bun.sh) HTTP server to copy when starting a new app. It has no runtime dependencies.
+A minimal, strict [Bun](https://bun.sh) HTTP server to copy when starting a new app. Its only runtime dependency is [Zod](https://zod.dev), which validates request bodies and env vars.
+
+<!-- template-only:start -->
 
 ## Start a new app from it
 
-One-time setup: register this folder as a local `bun create` template. The symlink means edits here reach every new app.
-
 ```sh
+# From GitHub (private repo, so pass a token)
+GITHUB_TOKEN=$(gh auth token) bun create aspirin2ds/bun-starter my-app
+
+# Or from this folder, after a one-time link (edits here reach new apps without pushing)
 mkdir -p ~/.bun-create && ln -s "$PWD" ~/.bun-create/bun-starter
-```
-
-Then, for each new app:
-
-```sh
 bun create bun-starter my-app
-cd my-app && bun run dev
 ```
 
-`bun create` copies everything except `node_modules` and sets `name` in `package.json`. It also starts a fresh git repo with an initial commit, creates `.env` from `.env.example`, and runs `bun install`, which turns on the pre-commit hook. It copies untracked files too, so keep secrets and scratch files out of this folder.
+`bun create` asks which variant you want:
+
+| Variant    | Adds                                                                  |
+| ---------- | --------------------------------------------------------------------- |
+| `basic`    | Nothing; the HTTP API described below                                 |
+| `postgres` | Drizzle ORM on `Bun.sql`, migrations, a `notes` example, PGlite tests |
+
+Set `STARTER_VARIANT=postgres` (or `basic`) to skip the question, for example in scripts.
+
+The new app gets a fresh git repo with one initial commit, its own `name`, a `.env` made from `.env.example`, installed dependencies and the pre-commit hook. The setup files (`setup.ts`, `variants/`) are removed. Untracked files in this folder are copied too, so keep secrets and scratch files out of it. Don't pass `--no-install`: it also skips the variant setup.
+
+### Changing the template
+
+- `setup.ts` asks for the variant (the `bun-create` preinstall step) and cleans up afterwards (the postinstall step).
+- `variants/<name>/overlay/` is copied over the app. `variants/<name>/package.json` lists dependencies and scripts to add, and `variants/<name>/{AGENTS,README}.md` are appended to the app's docs.
+- An overlay replaces whole files. When you change `src/config.ts`, `src/server.ts`, `src/index.ts` or their tests, make the same change in each overlay copy.
+- Run `bun run ci:variants` before pushing. It creates an app from every variant with `bun create` and runs that app's CI. Add variant names to check only those.
+- Text between `template-only` markers in this README and in `AGENTS.md` is removed from new apps.
+
+<!-- template-only:end -->
 
 ## Scripts
 
@@ -35,9 +52,9 @@ cd my-app && bun run dev
 ## Endpoints
 
 - `GET /health` → `{ "status": "ok" }`
-- `POST /api/echo` with a JSON object → `{ "echo": <body> }`
+- `POST /api/echo` with `{ "message": "hi" }` → `{ "echo": "hi" }`
 
-Anything else returns `404 { "error": "Not found" }`. Bodies over 1 MB get a 413.
+An invalid body returns `400 { "error": "Invalid request body", "details": [{ "path", "message" }] }`. Anything else returns `404 { "error": "Not found" }`, and bodies over 1 MB get a 413.
 
 ## Configuration
 
@@ -46,6 +63,8 @@ Anything else returns `404 { "error": "Not found" }`. Bodies over 1 MB get a 413
 | `PORT`     | `3000`        | `0` lets the OS pick a free port        |
 | `HOST`     | `0.0.0.0`     |                                         |
 | `NODE_ENV` | `development` | `development` \| `production` \| `test` |
+
+An empty value (`PORT=`) counts as unset. An invalid value stops startup with a message naming each bad variable.
 
 ## Docker
 

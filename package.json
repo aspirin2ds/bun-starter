@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "fix": "biome check --write .",
-    "ci": "bun run typecheck && bun run lint && bun test"
+    "ci": "bun run typecheck && bun run lint && bun test",
+    "ci:variants": "bun scripts/check-variants.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.8",
@@ -19,7 +20,11 @@
     "typescript": "^7.0.2"
   },
   "bun-create": {
-    "preinstall": "cp .env.example .env",
+    "preinstall": "setup.ts",
+    "postinstall": "setup.ts finalize",
     "start": "bun run dev"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
   }
 }

@@ -1,0 +1,4 @@
+[test]
+# Only run tests under test/. Keeps `bun test` out of variants/*/overlay/test, whose
+# dependencies are only installed in apps created from that variant.
+root = "test"

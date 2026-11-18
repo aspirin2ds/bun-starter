@@ -6,6 +6,10 @@ describe("loadConfig", () => {
     expect(loadConfig({})).toEqual({ port: 3000, hostname: "0.0.0.0", env: "development" });
   });
 
+  test("treats empty values as unset", () => {
+    expect(loadConfig({ PORT: "", HOST: "", NODE_ENV: "" })).toEqual(loadConfig({}));
+  });
+
   test("reads PORT, HOST and NODE_ENV", () => {
     expect(loadConfig({ PORT: "8080", HOST: "127.0.0.1", NODE_ENV: "production" })).toEqual({
       port: 8080,
@@ -19,10 +23,10 @@ describe("loadConfig", () => {
   });
 
   test.each(["abc", "-1", "65536", "3.5"])("rejects PORT=%p", (PORT) => {
-    expect(() => loadConfig({ PORT })).toThrow(/Invalid PORT/);
+    expect(() => loadConfig({ PORT })).toThrow(/Invalid environment[\s\S]*PORT/);
   });
 
   test("rejects an unknown NODE_ENV", () => {
-    expect(() => loadConfig({ NODE_ENV: "staging" })).toThrow(/Invalid NODE_ENV/);
+    expect(() => loadConfig({ NODE_ENV: "staging" })).toThrow(/Invalid environment[\s\S]*NODE_ENV/);
   });
 });

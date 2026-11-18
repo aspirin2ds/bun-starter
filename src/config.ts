@@ -1,11 +1,16 @@
-const ENVS = ["development", "production", "test"] as const;
-export type Env = (typeof ENVS)[number];
+import { z } from "zod";
 
-export type Config = Readonly<{
-  port: number;
-  hostname: string;
-  env: Env;
-}>;
+/** Every env var the app reads. Add new settings here, and to `.env.example`. */
+const EnvSchema = z
+  .object({
+    PORT: z.coerce.number().int().min(0).max(65_535).default(3000),
+    HOST: z.string().default("0.0.0.0"),
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  })
+  .transform((env) => ({ port: env.PORT, hostname: env.HOST, env: env.NODE_ENV }));
+
+export type Config = Readonly<z.output<typeof EnvSchema>>;
+export type Env = Config["env"];
 
 /**
  * Reads and validates settings once at startup. Bad values throw, so the process
@@ -13,17 +18,11 @@ export type Config = Readonly<{
  * so tests can pass their own.
  */
 export function loadConfig(env: Record<string, string | undefined> = Bun.env): Config {
-  const port = Number(env.PORT ?? 3000);
-  if (!Number.isInteger(port) || port < 0 || port > 65_535) {
-    throw new Error(`Invalid PORT "${env.PORT}": expected an integer from 0 to 65535`);
+  // `KEY=` in a .env file means "unset", not "empty string" (Number("") would be port 0).
+  const defined = Object.fromEntries(Object.entries(env).filter(([, value]) => value !== ""));
+  const result = EnvSchema.safeParse(defined);
+  if (!result.success) {
+    throw new Error(`Invalid environment:\n${z.prettifyError(result.error)}`);
   }
-
-  const mode = env.NODE_ENV ?? "development";
-  if (!isEnv(mode)) {
-    throw new Error(`Invalid NODE_ENV "${mode}": expected one of ${ENVS.join(", ")}`);
-  }
-
-  return Object.freeze({ port, hostname: env.HOST || "0.0.0.0", env: mode });
+  return Object.freeze(result.data);
 }
-
-const isEnv = (value: string): value is Env => (ENVS as readonly string[]).includes(value);

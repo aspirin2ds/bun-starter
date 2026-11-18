@@ -1,5 +1,11 @@
 # Agent rules
 
+<!-- template-only:start -->
+
+> **This repo is a `bun create` template.** Read "Changing the template" in README.md first. Any change to `src/config.ts`, `src/server.ts`, `src/index.ts` or their tests must also be made in the copies under `variants/*/overlay/`. `bun run ci:variants` must pass as well as `bun run ci`.
+
+<!-- template-only:end -->
+
 Rules for any agent (or person) changing this project. Keep it small: add a dependency, file or layer only when it is needed now.
 
 ## Commands
@@ -43,13 +49,13 @@ Unsure of a Bun API? Look it up instead of guessing from Node habits. Use the do
 
 ## Code rules
 
-- **Config:** read `Bun.env`/`process.env` only in `src/config.ts`. Add new settings to `Config`, validate them in `loadConfig`, and document them in `.env.example`.
+- **Config:** read `Bun.env`/`process.env` only in `src/config.ts`. Add a new setting to `EnvSchema` (Zod) and document it in `.env.example`. Never read env elsewhere.
 - **Responses:** every response is JSON via `json()`, including errors: `{ "error": "message" }`.
 - **Errors:** for client errors, `throw new HttpError(status, message)`; do not build error responses by hand in handlers. Let unexpected errors throw, because the `error` handler logs them and returns a 500 that hides the message outside development.
-- **Input:** treat bodies as `unknown`. Parse with `readJson()`, then check each field's type before using it. Never cast unchecked input to a domain type.
+- **Input:** every request body, query string and path parameter goes through a Zod schema before use. For bodies, use `readJson(req, Schema)`, which returns typed data or throws a 400 that lists the invalid fields. Define the schema next to its route and get types from it with `z.infer`; don't write a matching interface by hand. Never cast unchecked input with `as`.
 - **No import-time side effects** outside `src/index.ts`. Modules export functions; nothing listens, connects or reads env on import.
 - **Types:** strict TS with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`. No `any`, no `@ts-ignore`, and no non-null `!` unless a comment says why it is safe.
-- **Dependencies:** zero runtime dependencies is the default. Before adding one, check whether Bun already provides it. Add with `bun add` (or `bun add -d`) and commit `bun.lock`.
+- **Dependencies:** the only runtime dependency is `zod` (v4, `import { z } from "zod"`). Before adding another, check whether Bun already provides it. Add with `bun add` (or `bun add -d`) and commit `bun.lock`.
 - **Style:** Biome owns formatting and import order, so don't hand-format. Write comments for _why_, not _what_.
 
 ## Tests

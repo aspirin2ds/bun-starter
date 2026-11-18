@@ -15,16 +15,25 @@ describe("server", () => {
     expect(await res.json()).toEqual({ status: "ok" });
   });
 
-  test("POST /api/echo returns the body", async () => {
-    const res = await call("/api/echo", { method: "POST", body: JSON.stringify({ hi: "there" }) });
+  test("POST /api/echo returns the trimmed message", async () => {
+    const res = await call("/api/echo", { method: "POST", body: JSON.stringify({ message: "  hi  " }) });
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ echo: { hi: "there" } });
+    expect(await res.json()).toEqual({ echo: "hi" });
   });
 
-  test("POST /api/echo rejects a non-object body with 400", async () => {
+  test("POST /api/echo rejects malformed JSON with 400", async () => {
     const res = await call("/api/echo", { method: "POST", body: "nope" });
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "Body must be valid JSON" });
+  });
+
+  test("POST /api/echo lists invalid fields with 400", async () => {
+    const res = await call("/api/echo", { method: "POST", body: JSON.stringify({ message: "" }) });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({
+      error: "Invalid request body",
+      details: [{ path: "message", message: expect.any(String) }],
+    });
   });
 
   test("unknown path and wrong method return JSON 404", async () => {

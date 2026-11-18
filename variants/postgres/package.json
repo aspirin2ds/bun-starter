@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "drizzle-orm": "^0.45.4"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
+    "drizzle-kit": "^0.31.11"
+  },
+  "scripts": {
+    "db:up": "docker compose up -d --wait",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "bun scripts/migrate.ts"
+  }
+}

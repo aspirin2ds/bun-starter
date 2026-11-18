@@ -11,8 +11,8 @@ FROM oven/bun:${BUN_VERSION}-alpine
 WORKDIR /app
 ENV NODE_ENV=production PORT=3000
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json ./
-COPY src ./src
+# Copies the app (src/, plus drizzle/ and scripts/ in the Postgres variant); .dockerignore keeps tests, docs and secrets out.
+COPY --chown=bun:bun . .
 
 # The base image ships a non-root `bun` user.
 USER bun

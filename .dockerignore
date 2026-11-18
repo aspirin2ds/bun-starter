@@ -1,7 +1,14 @@
 node_modules
 test
 coverage
+variants
+setup.ts
+scripts/check-variants.ts
 .git
+.githooks
 .env
 .env.*
 *.md
+compose.yaml
+Dockerfile
+.dockerignore
